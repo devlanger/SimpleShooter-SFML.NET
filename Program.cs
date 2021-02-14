@@ -20,30 +20,44 @@ namespace SFMLGame
 
         static void Main(string[] args)
         {
-            RenderWindow window = new RenderWindow(new VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "SFML Space Shooter");
-
-            GameManager manager = new GameManager(window);
-
-            PlayerController playerController = new PlayerController();
-            EnemiesController enemiesController = new EnemiesController();
-
-            while (window.IsOpen)
+            var thread = new Thread(new ThreadStart(() =>
             {
-                window.Clear();
-                playerController.Update();
+                RenderWindow window = new RenderWindow(new VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "SFML Space Shooter");
+                window.Closed += Window_Closed;
 
-                foreach (var item in GameManager.GameObjects.ToList())
+                GameManager manager = new GameManager(window);
+
+                PlayerController playerController = new PlayerController();
+                EnemiesController enemiesController = new EnemiesController();
+
+                while (window.IsOpen)
                 {
-                    item.Update();
-                    UpdatePhysics(item);
+                    window.DispatchEvents();
 
-                    item.Sprite.Position = item.Position;
-                    item.Draw(window, RenderStates.Default);
+                    window.Clear();
+                    playerController.Update();
+
+                    foreach (var item in GameManager.GameObjects.ToList())
+                    {
+                        item.Update();
+                        UpdatePhysics(item);
+
+                        item.Sprite.Position = item.Position;
+                        item.Draw(window, RenderStates.Default);
+                    }
+
+                    window.Display();
+                    Thread.Sleep(30);
                 }
+            }));
 
-                window.Display();
-                Thread.Sleep(30);
-            }
+            thread.Start();
+            
+        }
+
+        private static void Window_Closed(object sender, EventArgs e)
+        {
+            ((Window)sender).Close();
         }
 
         private static void UpdatePhysics(GameObject item)
